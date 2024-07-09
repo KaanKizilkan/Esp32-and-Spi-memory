@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>ESP32 File Operations</title>
+</head>
+<body>
+  <h1>ESP32 File Upload</h1>
+  <form method="POST" action="/upload" enctype="multipart/form-data" onsubmit="uploadFile(event)">
+    <input type="file" name="file">
+    <input type="submit" value="Upload">
+  </form>
+
+  <h2>File Operations</h2>
+  <button onclick="deleteFile()">Delete</button>
+  <select id="pageSelect">
+    <!-- Dinamik olarak doldurulacak -->
+  </select>
+  <button onclick="loadPage()">Load Page</button>
+  <div id="pageContent" style="white-space: pre;"></div>
+
+  <script>
+    // Sayfa sayısını yükle ve dropdown'u doldur
+    fetch('/page_count')
+      .then(response => response.text())
+      .then(pageCount => {
+        const pageSelect = document.getElementById("pageSelect");
+        for (let i = 1; i <= parseInt(pageCount); i++) {
+          const option = document.createElement("option");
+          option.value = i;
+          option.text = `Page ${i}`;
+          pageSelect.add(option);
+        }
+      })
+      .catch(error => console.error("Error fetching page count:", error));
+
+    function loadPage() {
+      const pageSelect = document.getElementById("pageSelect");
+      const pageNumber = pageSelect.value;
+
+      fetch(`/page?number=${pageNumber}`)
+        .then(response => response.text())
+        .then(data => {
+          document.getElementById("pageContent").innerText = data;
+        })
+        .catch(error => console.error("Error fetching page:", error));
+    }
+
+    function uploadFile(event) {
+      event.preventDefault();
+      const form = event.target;
+      const formData = new FormData(form);
+
+      fetch('/upload', {
+        method: 'POST',
+        body: formData
+      })
+      .then(response => response.text())
+      .then(data => {
+        alert('File Uploaded and Written to SPI Flash!');
+        // Ana sayfaya yönlendir
+        window.location.href = '/';
+      })
+      .catch(error => console.error('Error uploading file:', error));
+    }
+
+    function deleteFile() {
+      fetch('/delete')
+        .then(response => response.text())
+        .then(data => {
+          alert(data);
+          // Ana sayfaya yönlendir
+          window.location.href = '/';
+        })
+        .catch(error => console.error('Error deleting file:', error));
+    }
+  </script>
+</body>
+</html>
